@@ -1,0 +1,29 @@
+{
+  "name": "discover-local-network",
+  "version": "1.0.0",
+  "description": "update the arp table and display it",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pulsovi/discover-local-network.git"
+  },
+  "keywords": [
+    "arp",
+    "ping",
+    "lan"
+  ],
+  "author": "David GABISON",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pulsovi/discover-local-network/issues"
+  },
+  "homepage": "https://github.com/pulsovi/discover-local-network#readme",
+  "dependencies": {
+    "ip": "^1.1.5",
+    "node-arp": "^1.0.6",
+    "ping": "git@github.com:danielzzz/node-ping.git"
+  }
+}
