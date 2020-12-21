@@ -1,4 +1,4 @@
-// jshint esversion: 6
+#!/usr/bin/env node
 const arp = require('node-arp');
 const ip = require('ip');
 const ping = require('ping');
