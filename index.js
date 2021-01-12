@@ -1,58 +1,123 @@
 #!/usr/bin/env node
-const arp = require('node-arp');
+const EventEmitter = require('events');
+
+const Configstore = require('configstore');
 const ip = require('ip');
+const arp = require('node-arp');
 const ping = require('ping');
 
-const cidr = process.argv[2];
-const subnet = ip.cidrSubnet(cidr);
-const start = ip.toLong(subnet.firstAddress);
-const stop = ip.toLong(subnet.lastAddress);
+const { name: packageName } = require('./package.json');
 
-var ipList = [];
-for (let i = start; i <= stop; ++i) {
-  ipList.push(ip.fromLong(i));
-}
+const config = new Configstore(packageName, { arp: {}});
 
-var displayList = [];
-var endings = -1;
-next();
+class Discoverer extends EventEmitter {
+  constructor(ipRange, options = {}) {
+    super();
+    Object.assign(this, {
+      details: true,
+      ipRange,
+      printAtEnd: false,
+      showProgress: false,
+    }, options);
 
-ipList.forEach(function(ipAddress) {
-  ping.sys.probe(ipAddress, function(isAlive) {
-    if (isAlive) {
-      arp.getMAC(ipAddress, function(err, mac){
-        displayList.push({
-          longIp: ip.toLong(ipAddress),
-          message: ipAddress + (err ? '' : '\t' + mac)
-        });
-        next();
+    this.run();
+  }
+
+  end() {
+    // eslint-disable-next-line id-length
+    this.found.sort((a, b) => a.longIp - b.longIp);
+    if (this.showProgress) console.info();
+    if (this.printAtEnd) {
+      this.found.forEach(displayItem => {
+        console.info(displayItem.message);
       });
-    } else {
-      next();
     }
-  });
-});
+    this.emit('end', this.found);
+  }
 
-function next() {
-  ++endings;
-  printProgress(endings + '/' + ipList.length + ' | ' + displayList.length + ' alives');
-  if(endings == ipList.length) {
-    console.log('');
-    printList();
+  run() {
+    const subnet = ip.cidrSubnet(this.ipRange);
+    const start = ip.toLong(subnet.firstAddress);
+    const stop = ip.toLong(subnet.lastAddress);
+
+    this.ipList = [];
+    for (let i = start; i <= stop; ++i)
+      this.ipList.push(ip.fromLong(i));
+
+    this.length = this.ipList.length;
+    this.found = [];
+    this.counter = -1;
+    this.alives = 0;
+    this.ipList.forEach(ipAddress => this.testAlive(ipAddress));
+    this.progress();
+  }
+
+  getMac(ipAddress) {
+    arp.getMAC(ipAddress, (err, mac) => {
+      if (err) {
+        this.found.push({
+          longIp: ip.toLong(ipAddress),
+          message: ipAddress,
+        });
+        this.progress();
+        return;
+      }
+      this.getName({
+        ipAddress,
+        longIp: ip.toLong(ipAddress),
+        mac,
+      });
+    });
+  }
+
+  getName(ipObj) {
+    const { ipAddress, mac } = ipObj;
+    const name = config.get(`arp.${mac}`);
+
+    if (name) {
+      ipObj.message = `${ipAddress}\t${mac}\t${name}`;
+      ipObj.name = name;
+    } else ipObj.message = `${ipAddress}\t${mac}`;
+
+    this.found.push(ipObj);
+    this.progress();
+  }
+
+  progress() {
+    this.counter += 1;
+    this.emit('progress', this.counter, this.length);
+    if (this.showProgress) {
+      process.stdout.clearLine();
+      process.stdout.cursorTo(0);
+      process.stdout.write(`${this.counter}/${this.length} | ${this.alives} alives`);
+    }
+    if (this.counter === this.length) this.end();
+  }
+
+  testAlive(ipAddress) {
+    ping.sys.probe(ipAddress, isAlive => {
+      if (isAlive) {
+        this.alives += 1;
+        this.emit('alive', ipAddress);
+        if (this.details)
+          this.getMac(ipAddress);
+        else {
+          this.found.push({
+            longIp: ip.toLong(ipAddress),
+            message: ipAddress,
+          });
+          this.progress();
+        }
+      } else {
+        this.emit('dead', ipAddress);
+        this.progress();
+      }
+    });
   }
 }
 
-function printProgress(progress){
-    process.stdout.clearLine();
-    process.stdout.cursorTo(0);
-    process.stdout.write(progress);
+function setName(mac, name) {
+  config.set(`arp.${mac}`, name);
 }
 
-function printList(){
-  displayList.sort(function(a, b){
-    return a.longIp - b.longIp;
-  });
-  displayList.forEach(function(displayItem){
-    console.log(displayItem.message);
-  });
-}
+module.exports = { Discoverer, setName };
