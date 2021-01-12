@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const EventEmitter = require('events');
 
 const Configstore = require('configstore');
