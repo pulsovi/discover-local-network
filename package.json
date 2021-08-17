@@ -3,11 +3,9 @@
   "version": "1.1.1",
   "description": "update the arp table and display it",
   "main": "index.js",
-  "bin": {
-    "discover-local-network": "bin/discover-local-network.js"
-  },
+  "bin": "bin/discover-local-network.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -24,11 +22,6 @@
     "url": "https://github.com/pulsovi/discover-local-network/issues"
   },
   "homepage": "https://github.com/pulsovi/discover-local-network#readme",
-  "eslintConfig": {
-    "extends": [
-      "pulsovi/node"
-    ]
-  },
   "dependencies": {
     "chalk": "^4.1.0",
     "commander": "^6.2.1",
@@ -38,6 +31,7 @@
     "ping": "^0.2.3"
   },
   "devDependencies": {
-    "eslint-config-pulsovi": "https://github.com/pulsovi/eslint-config-pulsovi.git"
+    "eslint": "^7.32.0",
+    "eslint-config-pulsovi-node": "^0.0.4"
   }
 }
