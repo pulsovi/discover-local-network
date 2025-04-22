@@ -6,6 +6,17 @@ Scanning is done via the `ping` command, so machines that do not respond on this
 
 ## Installation
 
+### Pour l'instant
+
+```shell
+git clone git@github.com:pulsovi/discover-local-network.git
+cd ./discover-local-network
+npm install
+npm install -g .
+```
+
+### Une fois que j'aurais publié
+
 `npm install -g discover-local-network`
 
 ## Usage
