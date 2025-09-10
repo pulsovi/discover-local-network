@@ -19,6 +19,10 @@ npm install -g .
 
 `npm install -g discover-local-network`
 
+or 
+
+`npm install -g .`
+
 ## Usage
 
 `discover-local-network 192.168.1.0/24`
